@@ -15,8 +15,6 @@ A tool for patching Gradle build scripts with newer Kotlin versions, meant for t
     ```
     kotlin-version-changer.bat --project C:\kotlin-gradle-test\ --version 1.1.2-eap-44 --repository EAP
     ```
-
-Destination, if provided, is not cleaned up before project copying. Consider using separate destinations or cleaning it manually.
     
 This tool does not analyze extension variables like `ext.kotlin_version`, instead, the versions are changed directly in the dependency declarations.
 Also, this tool is not meant for the projects you work with, because it does not follow Gradle idioms.
