@@ -1,5 +1,7 @@
 package com.github.h0tk3y.kotlinVersionChanger
 
+import org.codehaus.groovy.ast.expr.*
+
 abstract class EntryResolution(val lineNumber: Int)
 
 class ReplaceRangeWithVersion(lineNumber: Int,
@@ -22,7 +24,7 @@ class DependencyVersionFinder(val groupId: String) : org.codehaus.groovy.ast.Cod
     private var insideDependencies = false
     private var insidePluginsDsl = false
 
-    private fun checkString(str: org.codehaus.groovy.ast.expr.ConstantExpression) {
+    private fun checkString(str: ConstantExpression) {
         val match = colonDependencySyntax.matchEntire(str.text)!!
         val matchedVersion = match.groups.get(4)
         if (matchedVersion != null) {
@@ -38,13 +40,13 @@ class DependencyVersionFinder(val groupId: String) : org.codehaus.groovy.ast.Cod
         }
     }
 
-    override fun visitMethodCallExpression(call: org.codehaus.groovy.ast.expr.MethodCallExpression) {
+    override fun visitMethodCallExpression(call: MethodCallExpression) {
         val args = call.arguments
         if (insideDependencies) {
-            if (args is org.codehaus.groovy.ast.expr.ArgumentListExpression) {
+            if (args is ArgumentListExpression) {
                 for (arg in args.expressions
-                        .filterIsInstance<org.codehaus.groovy.ast.expr.GStringExpression>()
-                        .filter { it.text.startsWith(groupId) }) {
+                        .filterIsInstance<GStringExpression>()
+                        .filter { it.text.startsWith(groupId + ":") }) {
                     if (arg.strings.size == 1) {
                         val str = arg.strings.single()
                         checkString(str)
@@ -55,13 +57,13 @@ class DependencyVersionFinder(val groupId: String) : org.codehaus.groovy.ast.Cod
                     }
                 }
                 for (str in args.expressions
-                        .filterIsInstance<org.codehaus.groovy.ast.expr.ConstantExpression>()
-                        .filter { it.text.startsWith(groupId) }) {
+                        .filterIsInstance<ConstantExpression>()
+                        .filter { it.text.startsWith(groupId + ":") }) {
                     checkString(str)
                 }
-            } else if (args is org.codehaus.groovy.ast.expr.TupleExpression) {
+            } else if (args is TupleExpression) {
                 val arg = args.expressions.singleOrNull()
-                if (arg is org.codehaus.groovy.ast.expr.NamedArgumentListExpression && arg.mapEntryExpressions.any {
+                if (arg is NamedArgumentListExpression && arg.mapEntryExpressions.any {
                     it.keyExpression.text == "group" &&
                     it.valueExpression.text == groupId
                 }) {
