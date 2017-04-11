@@ -1,8 +1,9 @@
 package com.github.h0tk3y.kotlinVersionChanger
 
+import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.runMain
 
-class CliArguments(parser: com.xenomachina.argparser.ArgParser) : VersionChangerArguments {
+class CliArguments(parser: ArgParser) : VersionChangerArguments {
     override val project by parser.storing(
             "--project",
             help = "project root directory",

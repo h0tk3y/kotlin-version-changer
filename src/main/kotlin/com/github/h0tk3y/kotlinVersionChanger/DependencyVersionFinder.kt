@@ -1,5 +1,6 @@
 package com.github.h0tk3y.kotlinVersionChanger
 
+import org.codehaus.groovy.ast.CodeVisitorSupport
 import org.codehaus.groovy.ast.expr.*
 
 abstract class EntryResolution(val lineNumber: Int)
@@ -18,7 +19,7 @@ private val colonDependencySyntax = "([^:]*):([^:]*)(:(.*))?".toRegex()
 
 private val pluginDslPattern = "this\\.id\\(org\\.jetbrains\\.kotlin\\.(plugin\\.)?(.*?)\\)\\.version\\(.*?\\)".toRegex()
 
-class DependencyVersionFinder(val groupId: String) : org.codehaus.groovy.ast.CodeVisitorSupport() {
+class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
     val entryResolutions = mutableListOf<EntryResolution>()
 
     private var insideDependencies = false

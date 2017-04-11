@@ -1,11 +1,17 @@
 package com.github.h0tk3y.kotlinVersionChanger
 
+import groovy.lang.GroovyRuntimeException
+import org.codehaus.groovy.ast.ASTNode
+import org.codehaus.groovy.ast.builder.AstBuilder
+import org.codehaus.groovy.control.CompilePhase.CONVERSION
+import java.io.File
+
 enum class Repository { EAP, DEV, LOCAL, CENTRAL }
 
 interface VersionChangerArguments {
-    val project: java.io.File
+    val project: File
     val targetVersion: String
-    val destination: java.io.File?
+    val destination: File?
     val repository: Repository?
 }
 
@@ -18,12 +24,21 @@ fun transformProject(arguments: VersionChangerArguments) {
     }
 }
 
-private fun transformBuildscript(scriptFile: java.io.File, arguments: VersionChangerArguments) {
+private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArguments) {
     val fileLines = scriptFile.readLines()
 
     val visitor = DependencyVersionFinder(groupId = "org.jetbrains.kotlin")
-    org.codehaus.groovy.ast.builder.AstBuilder().buildFromString(org.codehaus.groovy.control.CompilePhase.CONVERSION, fileLines.joinToString("\n"))
-            .forEach { it.visit(visitor) }
+
+    val astRoots: List<ASTNode> = try {
+        if (fileLines.isNotEmpty())
+            AstBuilder().buildFromString(CONVERSION, fileLines.joinToString("\n")) else
+            emptyList()
+    } catch (e: GroovyRuntimeException) {
+        println("Ignoring malformed buildscript: $scriptFile")
+        return
+    }
+
+    astRoots.forEach { it.visit(visitor) }
 
     val lineReplacements = visitor.entryResolutions
             .filterIsInstance<ReplaceRangeWithVersion>()
