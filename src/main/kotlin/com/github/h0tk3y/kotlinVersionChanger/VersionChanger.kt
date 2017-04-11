@@ -2,6 +2,7 @@ package com.github.h0tk3y.kotlinVersionChanger
 
 import groovy.lang.GroovyRuntimeException
 import org.codehaus.groovy.ast.ASTNode
+import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.builder.AstBuilder
 import org.codehaus.groovy.control.CompilePhase.CONVERSION
 import java.io.File
@@ -38,7 +39,7 @@ private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArgu
         return
     }
 
-    astRoots.forEach { it.visit(visitor) }
+    astRoots.filter { it !is ClassNode }.forEach { it.visit(visitor) }
 
     val lineReplacements = visitor.entryResolutions
             .filterIsInstance<ReplaceRangeWithVersion>()
