@@ -45,13 +45,15 @@ private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArgu
             .groupBy { it.lineNumber }
             .map { (k, v) -> (k - 1) to v.sortedByDescending { it.range.start } }
 
-    val resultLines = fileLines.toMutableList()
+    val resultLines = fileLines.withIndex().toMutableList()
 
     for ((line, replacements) in lineReplacements)
         for (r in replacements)
-            resultLines[line] = resultLines[line].replaceRange(
-                    r.range,
-                    "${r.insertPrefix}${arguments.targetVersion}${r.insertSuffix}")
+            resultLines[line] = with(resultLines[line]) {
+                copy(value = value.replaceRange(
+                        r.range,
+                        "${r.insertPrefix}${arguments.targetVersion}${r.insertSuffix}"))
+            }
 
     val dslPluginLines = visitor.entryResolutions.filterIsInstance<RemovePluginDsl>()
     val pluginNames = dslPluginLines.map { it.pluginName }.distinct()
@@ -59,14 +61,24 @@ private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArgu
     val insertIntoRoot = buildString {
         if (dslPluginLines.any())
             append(pluginsDslRootReplacement(arguments, pluginNames) + "\n\n")
-        arguments.repository?.let { append(repoBlock(it)) }
+        if (visitor.entryResolutions.none { it is InsertRepositoryAtLine && !it.isBuildscript })
+            arguments.repository?.let { append(repoBlock(it)) }
     }
 
     if (insertIntoRoot.isNotEmpty()) {
         val safePositionInRoot = visitor.entryResolutions.filterIsInstance<InsertRootBlocksAtLine>()
-                                         .singleOrNull()?.lineNumber ?: 0
-        resultLines.add(safePositionInRoot,
-                        (if (dslPluginLines.any()) "\n" else "") + insertIntoRoot + (if (dslPluginLines.any()) "" else "\n"))
+                                         .firstOrNull()?.lineNumber ?: 0
+        resultLines.insertBeforeIndexedValue(safePositionInRoot,
+                                             (if (safePositionInRoot > 0) "\n" else "") +
+                                             insertIntoRoot +
+                                             (if (safePositionInRoot > 0) "" else "\n"))
+    }
+
+    arguments.repository?.let { repo ->
+        for (e in visitor.entryResolutions.filterIsInstance<InsertRepositoryAtLine>())
+            resultLines.insertBeforeIndexedValueBy(e.lineNumber - 1) { s ->
+                s.takeWhile { c -> c.isWhitespace() } + "    " + repoString(repo)
+            }
     }
 
     if (dslPluginLines.any()) {
@@ -76,16 +88,17 @@ private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArgu
     }
 
     val buildScriptBlock = buildString {
-        arguments.repository?.let { append(repoBlock(it) + "\n") }
-        if (pluginNames.any()) {
+        if (visitor.entryResolutions.none { it is InsertRepositoryAtLine && it.isBuildscript })
+            arguments.repository?.let { append(repoBlock(it) + "\n") }
+
+        if (pluginNames.any())
             append(pluginsDslBuildscriptReplacement(arguments, pluginNames))
-        }
     }
     if (buildScriptBlock.isNotEmpty()) {
-        resultLines.add(0, "buildscript {\n" + buildScriptBlock.lines().filterNot { it.isNullOrEmpty() }.map { "    $it" }.joinToString("\n") + "\n}\n")
+        resultLines.add(0, IndexedValue(0, "buildscript {\n" + buildScriptBlock.lines().filterNot { it.isNullOrEmpty() }.map { "    $it" }.joinToString("\n") + "\n}\n"))
     }
 
-    scriptFile.writeText(resultLines.joinToString("\n"))
+    scriptFile.writeText(resultLines.map { it.value }.joinToString("\n"))
 }
 
 private fun pluginsDslBuildscriptReplacement(arguments: VersionChangerArguments, pluginNames: List<String>) = buildString {

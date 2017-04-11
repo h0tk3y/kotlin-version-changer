@@ -14,6 +14,7 @@ class RemovePluginDsl(lineNumber: Int,
                       val pluginName: String) : EntryResolution(lineNumber)
 
 class InsertRootBlocksAtLine(lineNumber: Int): EntryResolution(lineNumber)
+class InsertRepositoryAtLine(lineNumber: Int, val isBuildscript: Boolean) : EntryResolution(lineNumber)
 
 private val colonDependencySyntax = "([^:]*):([^:]*)(:(.*))?".toRegex()
 
@@ -24,6 +25,9 @@ class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
 
     private var insideDependencies = false
     private var insidePluginsDsl = false
+    private var insideBuildscript = false
+
+    private var depth = 0
 
     private fun checkString(str: ConstantExpression) {
         val match = colonDependencySyntax.matchEntire(str.text)!!
@@ -42,6 +46,8 @@ class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
     }
 
     override fun visitMethodCallExpression(call: MethodCallExpression) {
+        ++depth
+
         val args = call.arguments
         if (insideDependencies) {
             if (args is ArgumentListExpression) {
@@ -84,6 +90,8 @@ class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
                     }
                 }
             }
+
+            --depth
         }
 
         if (insidePluginsDsl) {
@@ -95,18 +103,27 @@ class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
             }
         }
 
-        if (call.methodAsString == "dependencies") {
-            insideDependencies = true
-            args.visit(this)
-            insideDependencies = false
+        when {
+            call.methodAsString == "buildscript" && depth == 1 -> {
+                insideBuildscript = true
+                args.visit(this)
+                insideBuildscript = false
+            }
+            call.methodAsString == "repositories" -> {
+                entryResolutions += InsertRepositoryAtLine(args.lastLineNumber, insideBuildscript)
+            }
+            call.methodAsString == "dependencies" -> {
+                insideDependencies = true
+                args.visit(this)
+                insideDependencies = false
+            }
+            call.methodAsString == "plugins" && depth == 1 -> {
+                insidePluginsDsl = true
+                args.visit(this)
+                insidePluginsDsl = false
+                entryResolutions += InsertRootBlocksAtLine(args.lastLineNumber)
+            }
+            else -> super.visitMethodCallExpression(call)
         }
-        if (call.methodAsString == "plugins") {
-            insidePluginsDsl = true
-            args.visit(this)
-            insidePluginsDsl = false
-            entryResolutions += InsertRootBlocksAtLine(args.lastLineNumber)
-        }
-
-        super.visitMethodCallExpression(call)
     }
 }
