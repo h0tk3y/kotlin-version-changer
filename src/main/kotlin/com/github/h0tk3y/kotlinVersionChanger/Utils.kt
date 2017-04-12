@@ -11,7 +11,10 @@ internal fun IntRange.shrinkRight(by: Int) = expandRight(-by)
 internal fun <T> MutableList<IndexedValue<T>>.insertBeforeIndexedValue(indexed: Int, t: T) =
         insertBeforeIndexedValueBy(indexed) { t }
 
-internal fun <T> MutableList<IndexedValue<T>>.insertBeforeIndexedValueBy(indexed: Int, t: (T) -> T) {
-    val indexInList = indexOfFirst { it.index >= indexed }
-    add(indexInList, IndexedValue(indexed, t(this[indexInList].value)))
+internal fun <T> MutableList<IndexedValue<T>>.insertBeforeIndexedValueBy(indexed: Int, t: (T?) -> T) {
+    val indexInList = withIndex().firstOrNull { it.index >= indexed }?.index ?: size
+    val element = IndexedValue(indexed, t(this.getOrNull(indexInList)?.value))
+    if (indexInList in indices)
+        add(indexInList, element) else
+        add(element)
 }

@@ -49,7 +49,7 @@ class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
         ++depth
 
         val args = call.arguments
-        if (insideDependencies) {
+        if (insideDependencies && call.methodAsString != "exclude") {
             if (args is ArgumentListExpression) {
                 for (arg in args.expressions
                         .filterIsInstance<GStringExpression>()
@@ -86,7 +86,7 @@ class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
                         entryResolutions += ReplaceRangeWithVersion(
                                 arg.lineNumber,
                                 arg.lastColumnNumber.let { it..it - 1 },
-                                insertPrefix = "version: \"", insertSuffix = "\"")
+                                insertPrefix = ", version: \"", insertSuffix = "\"")
                     }
                 }
             }

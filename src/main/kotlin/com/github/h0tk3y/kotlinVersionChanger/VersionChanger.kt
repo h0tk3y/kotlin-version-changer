@@ -51,9 +51,10 @@ private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArgu
     for ((line, replacements) in lineReplacements)
         for (r in replacements)
             resultLines[line] = with(resultLines[line]) {
-                copy(value = value.replaceRange(
-                        r.range,
-                        "${r.insertPrefix}${arguments.targetVersion}${r.insertSuffix}"))
+                val replacement = "${r.insertPrefix}${arguments.targetVersion}${r.insertSuffix}"
+                copy(value = if (r.range == value.length..value.length - 1)
+                    value + replacement else
+                    value.replaceRange(r.range, replacement))
             }
 
     val dslPluginLines = visitor.entryResolutions.filterIsInstance<RemovePluginDsl>()
@@ -78,7 +79,7 @@ private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArgu
     arguments.repository?.let { repo ->
         for (e in visitor.entryResolutions.filterIsInstance<InsertRepositoryAtLine>())
             resultLines.insertBeforeIndexedValueBy(e.lineNumber - 1) { s ->
-                s.takeWhile { c -> c.isWhitespace() } + "    " + repoString(repo)
+                (s?.takeWhile { c -> c.isWhitespace() } ?: "") + "    " + repoString(repo)
             }
     }
 
