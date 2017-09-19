@@ -9,11 +9,11 @@ A tool for patching Gradle build scripts with newer Kotlin versions, meant for t
     * `--project` -- project root directory, e.g. `C:\kotlin-gradle-test\`
     * `--version` -- target Kotlin version, e.g. `1.1.2-eap-44`
     * `--destination` -- destination to copy the project, process in place if not provided
-    * `--repository` -- repository to add to buildscript and project, one of `DEV`, `EAP`, `LOCAL`
+    * `--repository` -- repository to add to buildscript and project, one of `DEV`, `EAP`, `EAP12`, `LOCAL`
  
     Example:
     ```
-    kotlin-version-changer.bat --project C:\kotlin-gradle-test\ --version 1.1.2-eap-44 --repository EAP
+    kotlin-version-changer.bat --project C:\kotlin-gradle-test\ --version 1.2-M2 --repository EAP12
     ```
     
 This tool does not analyze extension variables like `ext.kotlin_version`, instead, the versions are changed directly in the dependency declarations.
