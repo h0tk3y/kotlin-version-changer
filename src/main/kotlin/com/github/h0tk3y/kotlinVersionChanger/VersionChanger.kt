@@ -7,7 +7,7 @@ import org.codehaus.groovy.ast.builder.AstBuilder
 import org.codehaus.groovy.control.CompilePhase.CONVERSION
 import java.io.File
 
-enum class Repository { EAP, DEV, LOCAL, CENTRAL }
+enum class Repository { EAP, EAP12, DEV, LOCAL, CENTRAL }
 
 interface VersionChangerArguments {
     val project: File
@@ -130,6 +130,7 @@ private fun classicPluginNameByPortalName(portalName: String) = "kotlin" + when 
 private fun repoString(repository: Repository) = when (repository) {
     Repository.DEV -> "maven { url 'http://dl.bintray.com/kotlin/kotlin-dev' }"
     Repository.EAP -> "maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.1' }"
+    Repository.EAP12 -> "maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.2' }"
     Repository.LOCAL -> "mavenLocal()"
     Repository.CENTRAL -> "mavenCentral()"
 }

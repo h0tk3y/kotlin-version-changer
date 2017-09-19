@@ -18,7 +18,7 @@ class CliArguments(parser: ArgParser) : VersionChangerArguments {
             .default(null)
     override val repository by parser.storing<Repository?>(
             "--repository",
-            help = "repository to add to buildscript and project, one of DEV, EAP, LOCAL",
+            help = "repository to add to buildscript and project, one of DEV, EAP, EAP12, LOCAL",
             transform = { Repository.valueOf(toUpperCase()) })
             .default(null)
 }
