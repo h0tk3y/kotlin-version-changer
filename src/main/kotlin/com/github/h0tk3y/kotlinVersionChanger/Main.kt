@@ -1,7 +1,8 @@
 package com.github.h0tk3y.kotlinVersionChanger
 
 import com.xenomachina.argparser.ArgParser
-import com.xenomachina.argparser.runMain
+import com.xenomachina.argparser.default
+import com.xenomachina.argparser.mainBody
 
 class CliArguments(parser: ArgParser) : VersionChangerArguments {
     override val project by parser.storing(
@@ -23,6 +24,6 @@ class CliArguments(parser: ArgParser) : VersionChangerArguments {
             .default(null)
 }
 
-fun main(args: Array<String>) = CliArguments(com.xenomachina.argparser.ArgParser(args))
-        .runMain("kotlin-version-changer", f = ::transformProject)
+fun main(args: Array<String>) =
+    mainBody { transformProject(CliArguments(com.xenomachina.argparser.ArgParser(args))) }
 

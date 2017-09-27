@@ -12,7 +12,7 @@ internal fun <T> MutableList<IndexedValue<T>>.insertBeforeIndexedValue(indexed: 
         insertBeforeIndexedValueBy(indexed) { t }
 
 internal fun <T> MutableList<IndexedValue<T>>.insertBeforeIndexedValueBy(indexed: Int, t: (T?) -> T) {
-    val indexInList = withIndex().firstOrNull { it.index >= indexed }?.index ?: size
+    val indexInList = withIndex().firstOrNull { it.value.index >= indexed }?.index ?: size
     val element = IndexedValue(indexed, t(this.getOrNull(indexInList)?.value))
     if (indexInList in indices)
         add(indexInList, element) else
