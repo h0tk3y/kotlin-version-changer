@@ -111,7 +111,7 @@ private fun buildFreeCompilerArgsOption(arguments: List<String>): String {
     val preparedArguments = arguments.joinToString(separator = ",") { "\"$it\"" }
     return buildString {
         appendln("tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {")
-        appendln("    kotlinOptions.freeCompilerArgs = [")
+        appendln("    kotlinOptions.freeCompilerArgs = kotlinOptions.freeCompilerArgs + [")
         appendln("        $preparedArguments")
         appendln("    ]")
         appendln("}")
