@@ -14,6 +14,7 @@ interface VersionChangerArguments {
     val targetVersion: String
     val destination: File?
     val repository: Repository?
+    val freeCompilerArgs: List<String>
 }
 
 fun transformProject(arguments: VersionChangerArguments) {
@@ -65,6 +66,9 @@ private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArgu
             append(pluginsDslRootReplacement(arguments, pluginNames) + "\n\n")
         if (visitor.entryResolutions.none { it is InsertRepositoryAtLine && !it.isBuildscript })
             arguments.repository?.let { append(repoBlock(it)) }
+        if (arguments.freeCompilerArgs.isNotEmpty()) {
+            append(buildFreeCompilerArgsOption(arguments.freeCompilerArgs))
+        }
     }
 
     if (insertIntoRoot.isNotEmpty()) {
@@ -101,6 +105,17 @@ private fun transformBuildscript(scriptFile: File, arguments: VersionChangerArgu
     }
 
     scriptFile.writeText(resultLines.map { it.value }.joinToString("\n"))
+}
+
+private fun buildFreeCompilerArgsOption(arguments: List<String>): String {
+    val preparedArguments = arguments.joinToString(separator = ",") { "\"$it\"" }
+    return buildString {
+        appendln("tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {")
+        appendln("    kotlinOptions.freeCompilerArgs = [")
+        appendln("        $preparedArguments")
+        appendln("    ]")
+        appendln("}")
+    }
 }
 
 private fun pluginsDslBuildscriptReplacement(arguments: VersionChangerArguments, pluginNames: List<String>) = buildString {

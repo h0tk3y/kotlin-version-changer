@@ -22,6 +22,11 @@ class CliArguments(parser: ArgParser) : VersionChangerArguments {
             help = "repository to add to buildscript and project, one of DEV, EAP, EAP12, LOCAL",
             transform = { Repository.valueOf(toUpperCase()) })
             .default(null)
+    override val freeCompilerArgs by parser.storing<List<String>>(
+            "--freeCompilerArgs",
+            help = "a list of additional compiler arguments that will be passed to the compiler",
+            transform = { this.split(' ') })
+            .default(emptyList())
 }
 
 fun main(args: Array<String>) =
