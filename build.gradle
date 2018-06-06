@@ -1,5 +1,5 @@
 group 'com.github.h0tk3y.kotlinVersionChanger'
-version '0.0.4'
+version '0.0.4-1'
 
 buildscript {
     ext.kotlin_version = '1.2.41'
