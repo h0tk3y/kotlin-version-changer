@@ -90,8 +90,6 @@ class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
                     }
                 }
             }
-
-            --depth
         }
 
         if (insidePluginsDsl) {
@@ -125,5 +123,7 @@ class DependencyVersionFinder(val groupId: String) : CodeVisitorSupport() {
             }
             else -> super.visitMethodCallExpression(call)
         }
+
+        --depth
     }
 }

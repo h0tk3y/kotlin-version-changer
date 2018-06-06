@@ -25,7 +25,7 @@ class CliArguments(parser: ArgParser) : VersionChangerArguments {
     override val freeCompilerArgs by parser.storing<List<String>>(
             "--freeCompilerArgs",
             help = "a list of additional compiler arguments that will be passed to the compiler",
-            transform = { this.split(' ') })
+            transform = { if (this.isBlank()) emptyList() else this.split(' ') })
             .default(emptyList())
 }
 
